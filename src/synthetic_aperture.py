@@ -42,19 +42,37 @@ def crop_search_window(img, window_size, template_size, focus_center = None):
         tmp = data[x0:x1,y0:y1]
         
     Args:
-        template_size(int): This int (e.g. 20) s the size of the template which we are cropping from the first frame of the video.
+        template_size(int): This int (e.g. 20) is the size of the template which we are cropping from the first frame of the video.
         window_size(int): Windows size (e.g. 120), should be larger than template_size
         img(ndarray): Video data with sahpe ((272, 480, 3, 51))
         focus_center(list): 2D array which is where we want to focus at. If none simply take the center of the image
         
     Returns:
         windows(ndarray): Should be (window_size,window_size,3,num_mgs)
-        template(ndarray): Should be (template_size,window_size,3) - only once for initial frame
+        template(ndarray): Should be (template_size,template_size,3) - only once for initial frame
         top_left_window(list): top-left index coordinates where we are cropping the window_size e.g. [100,400]
         top_left_template(list): top-left index coorinates where the termplate is cropped e.g. [110,410]
         
     """
-    raise NotImplementedError
+    
+    x_center = img.shape[1]
+    y_center = img.shape[0]
+    
+    if np.all(focus_center):
+        x_center = focus_center[1] * 2
+        y_center = focus_center[0] * 2
+
+    xmin = int((x_center - window_size) / 2)
+    xmax = int((x_center + window_size) / 2)
+    ymin = int((y_center - window_size) / 2)
+    ymax = int((y_center + window_size) / 2)
+    xmin_template = int((x_center - template_size) / 2)
+    xmax_template = int((x_center + template_size) / 2)
+    ymin_template = int((y_center - template_size) / 2)
+    ymax_template = int((y_center + template_size) / 2)
+    windows = img[ymin:ymax,xmin:xmax,:,:]
+    template = img[ymin_template:ymax_template,xmin_template:xmax_template,:,0]
+    return windows, template, [ymin,xmin], [ymin_template,xmin_template]
 
 
         
@@ -80,7 +98,13 @@ def findCorrelation(img,template,method='cv2.TM_CCOEFF_NORMED'):
         top_left(ndarray): the location of the maximum in the correlation image cast to int (not uint8)
     
     '"""
-    raise NotImplementedError
+    
+    
+    
+    method_cv = eval(method)
+    res = cv2.matchTemplate(img,template,method_cv)
+    _, maxVal, _, maxLoc = cv2.minMaxLoc(res)
+    return res,maxLoc[::-1]
     
 
 
@@ -112,7 +136,16 @@ def findCorrelationAll(imgs,template,method='cv2.TM_CCOEFF_NORMED'):
         with shape (2, num_images)
     
     """
-    raise NotImplementedError
+    temp,_ = findCorrelation(imgs[:,:,:,0],template)
+    res = np.empty((imgs.shape[3],temp.shape[0],temp.shape[1]))
+    maxLoc = np.empty((2,imgs.shape[3]))
+    for i in range(imgs.shape[3]):
+        res[i,:,:],maxLoc[:,i] = findCorrelation(imgs[:,:,:,i],template)
+        
+    return res,maxLoc.astype(int)
+        
+                  
+          
 
 def correct_correlation_result_to_image_coordinates(top_left_correlated_list,imgs,window,template):
     """
@@ -140,7 +173,12 @@ def correct_correlation_result_to_image_coordinates(top_left_correlated_list,img
         out: ndarray(int) - The corrected pixel locations in original image space
     
     """
-    raise NotImplementedError
+    result = np.empty((top_left_correlated_list.shape))
+    for j in range(top_left_correlated_list.shape[1]):
+        result[0,j] = top_left_correlated_list[0,j] + template.shape[0] / 2
+        result[1,j] = top_left_correlated_list[1,j] + template.shape[1] / 2
+        
+    return result.astype(int)
 
 
 def calculate_pixel_shifts(top_left_correlated):
@@ -160,7 +198,12 @@ def calculate_pixel_shifts(top_left_correlated):
         pixel_shifts(ndarray): The pixel shifts between different frames
     
     """
-    raise NotImplementedError
+    pixel_shifts = np.empty((top_left_correlated.shape))
+    pixel_shifts[:,0] = [0,0]
+    for i in range(1,pixel_shifts.shape[1]):
+        pixel_shifts[:,i] = top_left_correlated[:,i] - top_left_correlated[:,0]
+        
+    return pixel_shifts
 
     
 def translate_image(img,dx,dy):
@@ -179,7 +222,9 @@ def translate_image(img,dx,dy):
         res(ndarray): translated image, same shape as input.
     
     """
-    raise NotImplementedError
+    M = np.float64([[1, 0, dx],[0, 1, dy]])
+    result = cv2.warpAffine(img,M=M,dsize=(img.shape[1], img.shape[0]))
+    return result
 
 
 def translate_all_images(imgs,pixel_shifts):
@@ -197,7 +242,12 @@ def translate_all_images(imgs,pixel_shifts):
         out(ndarray): shifted images with same shape as imgs
     
     """
-    raise NotImplementedError
+    shifted_imgs = np.empty((imgs.shape))
+    for i in range(imgs.shape[3]):
+        shifted_imgs[:,:,:,i] = translate_image(imgs[:,:,:,i],-pixel_shifts[1,i],-pixel_shifts[0,i])
+        
+    return shifted_imgs.astype(np.uint8)
+        
 
 
 def average_images(imgs):
@@ -213,7 +263,8 @@ def average_images(imgs):
         out(ndarray): average RGB image over the temporal dimensions
     
     """
-    raise NotImplementedError
+    
+    return np.mean(imgs,axis = 3).astype(np.uint8)
 
 
 

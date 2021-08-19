@@ -19,7 +19,7 @@ import src.synthetic_aperture as synthetic_aperture
 
 
 
-savedir = 'output_synthethic'
+savedir = 'output_synthethic_picture'
 
 def save_fig_as_png(figtitle):
     '''

@@ -39,8 +39,29 @@ def bilinear_interpolate_numpy_matrix(data, x, y):
         y(ndarray): Meshgrid for coordinates in y
     
     """
-    raise NotImplementedError
+    
+    x0 = np.floor(x).astype(int)
+    x1 = x0 + 1
+    y0 = np.floor(y).astype(int)
+    y1 = y0 + 1
+    
+    wa = (x1-x) * (y1-y)
+    wb = (x1-x) * (y-y0)
+    wc = (x-x0) * (y1-y)
+    wd = (x-x0) * (y-y0)
+    
+    x0 = np.clip(x0, 0, data.shape[1]-1)
+    x1 = np.clip(x1, 0, data.shape[1]-1)
+    y0 = np.clip(y0, 0, data.shape[0]-1)
+    y1 = np.clip(y1, 0, data.shape[0]-1)
+    
+    Ia = data[ y0, x0 ]
+    Ib = data[ y1, x0 ]
+    Ic = data[ y0, x1 ]
+    Id = data[ y1, x1 ]
 
+    return (Ia*wa) + (Ib*wb) + (Ic*wc) + (Id*wd)
+    
 def bilinear_interpolate_numpy_2D_image(data, x, y):
     """
     
@@ -67,12 +88,30 @@ def bilinear_interpolate_numpy_2D_image(data, x, y):
         y(ndarray): Meshgrid for coordinates in y
     
     """
-    raise NotImplementedError
-    
-    
-    
     
 
+    x0 = np.floor(x).astype(int)
+    x1 = x0 + 1
+    y0 = np.floor(y).astype(int)
+    y1 = y0 + 1
+    
+    wa = (x1-x) * (y1-y)
+    wb = (x1-x) * (y-y0)
+    wc = (x-x0) * (y1-y)
+    wd = (x-x0) * (y-y0)
+    
+    x0 = np.clip(x0, 0, data.shape[1]-1)
+    x1 = np.clip(x1, 0, data.shape[1]-1)
+    y0 = np.clip(y0, 0, data.shape[0]-1)
+    y1 = np.clip(y1, 0, data.shape[0]-1)
+    
+    Ia = data[ y0, x0 ]
+    Ib = data[ y1, x0 ]
+    Ic = data[ y0, x1 ]
+    Id = data[ y1, x1 ]
+
+    return (Ia*wa) + (Ib*wb) + (Ic*wc) + (Id*wd)
+    
     
 def bilinear_interpolate_numpy_RGB_image(data, x, y):
     """
@@ -97,8 +136,35 @@ def bilinear_interpolate_numpy_RGB_image(data, x, y):
         y(ndarray): Meshgrid for coordinates in y
     
     """
-    raise NotImplementedError
     
+    x0 = np.floor(x).astype(int)
+    x1 = x0 + 1
+    y0 = np.floor(y).astype(int)
+    y1 = y0 + 1
+    
+    
+    wa = (x1-x) * (y1-y)
+    wb = (x1-x) * (y-y0)
+    wc = (x-x0) * (y1-y)
+    wd = (x-x0) * (y-y0)
+    
+    wa = np.dstack([wa] * 3)
+    wb = np.dstack([wb] * 3)
+    wc = np.dstack([wc] * 3)
+    wd = np.dstack([wd] * 3)
+     
+    x0 = np.clip(x0, 0, data.shape[1]-1)
+    x1 = np.clip(x1, 0, data.shape[1]-1)
+    y0 = np.clip(y0, 0, data.shape[0]-1)
+    y1 = np.clip(y1, 0, data.shape[0]-1)
+    
+    Ia = data[y0,x0,:]
+    Ib = data[y1,x0,:]
+    Ic = data[y0,x1,:]
+    Id = data[y1,x1,:]
+    
+    return ((Ia * wa) + (Ib * wb) + (Ic * wc) + (Id * wd)).astype(np.uint8)
+                      
 
     
     
@@ -124,8 +190,59 @@ def bilinear_interpolate_numpy(data, x, y):
         y(ndarray): Meshgrid for coordinates in y
     
     """
-    raise NotImplementedError
-
+    
+    x0 = np.floor(x).astype(int)
+    x1 = x0 + 1
+    y0 = np.floor(y).astype(int)
+    y1 = y0 + 1
+    
+    
+    wa = (x1-x) * (y1-y)
+    wb = (x1-x) * (y-y0)
+    wc = (x-x0) * (y1-y)
+    wd = (x-x0) * (y-y0)
+    
+    wa = np.stack([wa] * data.shape[2])
+    wa = np.stack([wa] * data.shape[3])
+    wa = np.stack([wa] * data.shape[4])
+    wa = wa.T
+    if len(wa.shape) == 5:
+        wa = np.swapaxes(wa,0,1)
+    
+    
+    wb = np.stack([wb] * data.shape[2])
+    wb = np.stack([wb] * data.shape[3])
+    wb = np.stack([wb] * data.shape[4])
+    wb = wb.T
+    if len(wb.shape) == 5:
+        wb = np.swapaxes(wb,0,1)
+    
+    wc = np.stack([wc] * data.shape[2])
+    wc = np.stack([wc] * data.shape[3])
+    wc = np.stack([wc] * data.shape[4])
+    wc = wc.T
+    if len(wc.shape) == 5:
+        wc = np.swapaxes(wc,0,1)
+    
+    wd = np.stack([wd] * data.shape[2])
+    wd = np.stack([wd] * data.shape[3])
+    wd = np.stack([wd] * data.shape[4])
+    wd = wd.T
+    if len(wd.shape) == 5:
+        wd = np.swapaxes(wd,0,1)
+     
+    x0 = np.clip(x0, 0, data.shape[1]-1)
+    x1 = np.clip(x1, 0, data.shape[1]-1)
+    y0 = np.clip(y0, 0, data.shape[0]-1)
+    y1 = np.clip(y1, 0, data.shape[0]-1)
+    
+    Ia = data[y0,x0,:]
+    Ib = data[y1,x0,:]
+    Ic = data[y0,x1,:]
+    Id = data[y1,x1,:]
+    print(Ia.shape)
+    
+    return ((Ia * wa) + (Ib * wb) + (Ic * wc) + (Id * wd)).astype(np.uint8)
     
 
 def get_shift_1D(img,alpha):
@@ -146,7 +263,10 @@ def get_shift_1D(img,alpha):
         shifts(ndarray): 1D-array with shape (17x1) with shifts for each view
     
     """
-    raise NotImplementedError
+    
+    u_k = list(range(-8,9))
+   
+    return np.dot((1-alpha),u_k)
 
 
 def shift_images_1d(img,shifts):
@@ -164,7 +284,16 @@ def shift_images_1d(img,shifts):
         out(ndarray): shifted lightfield with same shape as img
     
     """
-    raise NotImplementedError
+    
+    out = np.empty((img.shape))
+    for i in range(len(shifts)):
+        out[i,:] = scipy.ndimage.shift(img[i,:],shifts[i],mode='mirror')
+    
+    return out
+        
+    
+                   
+
 
 
 def average_1d_signal(img):
@@ -175,10 +304,12 @@ def average_1d_signal(img):
     Args:
         img(ndarray): 2D-lightfield image with shape (17x300)        
     Returns: 
-         refocused(1d-np.array): 1D-array with shape (Num_pixel x1) that is refocused
+        refocused(1d-np.array): 1D-array with shape (Num_pixel x1) that is refocused
     
     """
-    raise NotImplementedError
+    
+    refocused = np.mean(img,axis = 0)
+    return refocused
 
 def get_alpha_values():
     """
@@ -190,7 +321,7 @@ def get_alpha_values():
         out(array or list): A list with interesting alpha values
     
     """
-    raise NotImplementedError
+    return np.array([0.5,0.75,1])
 
 
 def get_shifts(lf_shape,alpha):
@@ -219,7 +350,10 @@ def get_shifts(lf_shape,alpha):
             in x and y coordiantes
     
     """
-    raise NotImplementedError
+    u_k = [i for i in range(-8,9)]
+    line =  np.dot((1-alpha),u_k)
+    DY,DX = np.meshgrid(line,line[::-1])
+    return DX,DY
 
 
 def translate_image(img,dx,dy):
@@ -235,7 +369,10 @@ def translate_image(img,dx,dy):
         dx,dy(float): amount that image needs to translated
     
     """
-    raise NotImplementedError
+    
+    M = np.float64([[1, 0, dy],[0, 1, dx]])
+    result = cv2.warpAffine(img,M=M,dsize=(img.shape[1], img.shape[0]))
+    return result
 
 
 def shift_lightfield(data,DX,DY):
@@ -253,7 +390,11 @@ def shift_lightfield(data,DX,DY):
         out(ndarray): a lightfield that was shifted. Same shape as data
     
     """
-    raise NotImplementedError
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            data[i,j,:,:,:] = translate_image(data[i,j,:,:,:],DX[i,j],DY[i,j])
+    return data
+    
 
 
 
@@ -276,10 +417,18 @@ def weight_shifted_ligthfield(data,mask = None):
         mask(ndarray): 2D-matrix of the aperture mask function (can be None if no mask provided)
     
     Returns:
-        out(ndarray): weighted lightfield with same sahape
+        out(ndarray): weighted lightfield with same shape
     
     """
-    raise NotImplementedError
+    if not np.all(mask):
+        return data
+    
+    mask = np.stack([mask] * data.shape[2])
+    mask = np.stack([mask] * data.shape[3])
+    mask = np.stack([mask] * data.shape[4])
+    mask = mask.T
+    return (data * mask)
+    
 
 
 
@@ -304,7 +453,17 @@ def crop_part(data,A_mask = None):
         out(ndarray): The cropped lightfield. The first 2 dimension should have shape of A_mask
     
     """
-    raise NotImplementedError
+    
+    if np.all(A_mask):
+        ymin = int((data.shape[0] - A_mask.shape[0])/2)
+        ymax = int((data.shape[0] + A_mask.shape[0])/2)
+        xmin = int((data.shape[1] - A_mask.shape[1])/2)
+        xmax = int((data.shape[1] + A_mask.shape[1])/2)
+        return data[ymin:ymax,xmin:xmax,:,:,:]
+    else:
+        return data
+    
+    
 
 
 
@@ -341,5 +500,11 @@ def average_shifted_lightfield(tmp_lf,A_mask=None):
         out(ndarray 0 uint8): an RGB image which should now be refocused
     
     """
-    raise NotImplementedError
+
+    if np.all(A_mask):
+        img = np.mean(tmp_lf,axis = (0,1))
+        return img.astype(np.uint8)
+    else:
+        img = np.mean(tmp_lf,axis = (0,1))
+        return img.astype(np.uint8)
 

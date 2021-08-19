@@ -16,7 +16,7 @@ import os
 
 import src.lightfield as lightfield
 
-savedir = 'output_lightfield'
+savedir = 'output_lightfield_picture'
 
 def save_fig_as_png(figtitle):
     '''
